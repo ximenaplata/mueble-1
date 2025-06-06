@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mueble 1 – El Último Respiro</title>
+<style>
+    :root { --transition: 0.4s ease; }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0e141b;color:#fff}
+    #game{width:90%;max-width:900px;background:#1b2530;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.6);overflow:hidden;position:relative}
+    header,footer{text-align:center;padding:15px;background:#111a22}
+    footer{font-size:0.85rem}
+    main{padding:25px;min-height:400px;position:relative;background-size:cover;background-position:center}
+    .hidden{display:none}
+    h1{margin-bottom:10px;font-size:1.5rem}
+    h2{margin-bottom:10px;font-size:1.25rem}
+    p{margin-bottom:8px;line-height:1.4}
+    button{cursor:pointer;padding:10px 18px;border:none;border-radius:6px;font-weight:bold;color:#fff;background:#0e7e12;transition:background var(--transition)}
+    button:hover{background:#11991a}
+    #options button{display:block;width:100%;margin:6px 0;text-align:left;background:#243344;padding:12px}
+    #options button:hover{background:#2d4155}
+    #overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+    #overlay.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="game">
+  <header>
+    <h1>Mueble 1 – El Último Respiro</h1>
+  </header>
+  <main id="scene">
+    <!-- dynamic content -->
+  </main>
+  <footer>
+    &copy; 2025 Proyecto Eco Juego
+  </footer>
+</div>
+
+<audio id="music" loop src="https://cdn.pixabay.com/download/audio/2022/11/03/audio_a67405a0d7.mp3?filename=gaming-background-music-1-114672.mp3"></audio>
+<audio id="correct-sfx" src="https://cdn.pixabay.com/download/audio/2022/02/15/audio_1578ad3280.mp3?filename=notification-4-21470.mp3"></audio>
+<audio id="wrong-sfx" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_5411511e84.mp3?filename=error-126627.mp3"></audio>
+
+<script>
+const bgImages=[
+ "https://images.unsplash.com/photo-1454789548928-8ecded20ed93?fit=crop&w=1600&q=60",
+ "https://images.unsplash.com/photo-1503264116251-35a269479413?fit=crop&w=1600&q=60",
+ "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?fit=crop&w=1600&q=60",
+ "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?fit=crop&w=1600&q=60",
+ "https://images.unsplash.com/photo-1508182311256-3e0a948f2358?fit=crop&w=1600&q=60"
+];
+
+const levels=[
+ {title:"Nivel 1 – El Aire Irrespirable",
+  intro:(name)=>`${name}, los hospitales están desbordados por enfermedades pulmonares y la visibilidad fuera es casi nula. Cada respuesta correcta reducirá la contaminación un 3 %.`,
+  progress:["¡La contaminación ha bajado 3 %!", "¡6 %!", "¡9 %!", "¡12 %!", "¡15 %! Los pacientes comienzan a recuperarse."],
+  questions:[
+   ["¿Cuál es el contaminante principal emitido por los autos?",
+     [["Monóxido de carbono",true],["Oxígeno",false],["Helio",false],["Nitrógeno",false]]],
+   ["Las partículas PM2.5 pueden…",
+     [["Entrar profundamente en tus pulmones",true],["Mejorar la respiración",false],["Ser inofensivas",false],["Curar alergias",false]]],
+   ["¿Qué tecnología automotriz reduce emisiones?",
+     [["Catalizador",true],["Turbo",false],["Aire acondicionado",false],["Llantas grandes",false]]],
+   ["¿Qué transporte NO contamina el aire directamente?",
+     [["Bicicleta",true],["Motocicleta",false],["Camión diésel",false],["Automóvil a gasolina",false]]],
+   ["¿Qué fenómeno agrava la contaminación en ciudades?",
+     [["Inversión térmica",true],["Aurora boreal",false],["Lluvia ligera",false],["Niebla marina",false]]]
+ ]},
+ {title:"Nivel 2 – Las Ciudades Invisibles",
+  intro:(name)=>`${name}, la visibilidad es casi nula por la densa capa de esmog. Ayuda a despejar los cielos.`,
+  progress:["¡Visibilidad +5 %!", "+10 %!", "+15 %!", "+20 %!", "¡25 %! Ahora se distinguen los edificios."],
+  questions:[
+   ["¿Qué gas forma el esmog fotoquímico junto con óxidos de nitrógeno?",
+     [["Ozono troposférico",true],["Oxígeno",false],["Argón",false],["Neón",false]]],
+   ["Las chimeneas industriales deben usar…",
+     [["Filtros y depuradores",true],["Pintura nueva",false],["Luces LED",false],["Antenas",false]]],
+   ["¿Cuál de estos mejora la calidad del aire urbano?",
+     [["Áreas verdes",true],["Concreto adicional",false],["Pavimento oscuro",false],["Cristales polarizados",false]]],
+   ["Combustible más limpio para buses urbanos:",
+     [["Gas natural comprimido (GNC)",true],["Diésel con azufre alto",false],["Keroseno",false],["Carbón",false]]],
+   ["Norma que limita emisiones de vehículos:",
+     [["Euro VI",true],["ISO 9001",false],["HDMI",false],["VPN",false]]]
+ ]},
+ {title:"Nivel 3 – La Flora Que No Respira",
+  intro:(name)=>`${name}, las plantas se marchitan y la cadena alimenticia peligra. Devuelve la vida a la vegetación.`,
+  progress:["¡Las hojas vuelven a brotar!", "¡Se ven primeros brotes!", "¡Florecen campos!", "¡Bosques reverdecen!", "¡La fotosíntesis aumenta 20 %!"],
+  questions:[
+   ["El dióxido de azufre causa…",
+     [["Lluvia ácida",true],["Fotosíntesis acelerada",false],["Brillo solar extra",false],["Nada",false]]],
+   ["Las plantas absorben CO₂ y liberan…",
+     [["Oxígeno",true],["Ozono",false],["Metano",false],["Plomo",false]]],
+   ["Para reducir incendios forestales debemos…",
+     [["Gestionar residuos orgánicos",true],["Añadir gasolina",false],["Secar bosques",false],["Cortar todo",false]]],
+   ["Fertilizar en exceso puede…",
+     [["Liberar amoníaco al aire",true],["Eliminar contaminación",false],["Crear nubes limpias",false],["Curar plantas",false]]],
+   ["¿Qué rol tienen las abejas?",
+     [["Polinizar y sostener ecosistemas",true],["Crear smog",false],["Producir CO₂",false],["Nada",false]]]
+ ]},
+ {title:"Nivel 4 – El Agua Ácida",
+  intro:(name)=>`${name}, la lluvia ácida devora monumentos y envenena ríos. Purifica la atmósfera para restaurar el ciclo del agua.`,
+  progress:["pH +0.3", "pH +0.6", "pH +0.9", "pH +1.2", "¡El agua vuelve a ser neutral!"],
+  questions:[
+   ["Principal precursor de lluvia ácida:",
+     [["Óxidos de azufre",true],["Helio",false],["Protón",false],["Neón",false]]],
+   ["Los NOₓ provienen de…",
+     [["Combustión a alta temperatura",true],["Fotosíntesis",false],["Evaporación",false],["Fusión nuclear",false]]],
+   ["Para disminuir NOₓ en autos se usa…",
+     [["Recirculación de gases (EGR)",true],["Reproductor de música",false],["Navegador GPS",false],["Spoiler trasero",false]]],
+   ["Las centrales eléctricas más limpias son…",
+     [["Eólicas y solares",true],["Carbón",false],["Petróleo",false],["Diésel",false]]],
+   ["La lluvia ácida daña suelos porque…",
+     [["Disuelve nutrientes esenciales",true],["Les agrega vitaminas",false],["No los afecta",false],["Los enfría",false]]]
+ ]},
+ {title:"Nivel 5 – La Atmósfera Quebrada",
+  intro:(name)=>`${name}, los gases contaminantes han debilitado la atmósfera y el calor es insoportable. ¡Ciérrala de nuevo!`,
+  progress:["¡Gases tóxicos -5 %!", "-10 %!", "-15 %!", "-20 %!", "¡El escudo atmosférico se repara!"],
+  questions:[
+   ["Gas de efecto invernadero más abundante:",
+     [["Dióxido de carbono",true],["Helio",false],["Vapor de mercurio",false],["Kriptón",false]]],
+   ["Los HFC se usan en…",
+     [["Refrigerantes y aerosoles",true],["Lámparas incandescentes",false],["Bicicletas",false],["Zapatos",false]]],
+   ["El Protocolo de Montreal controla…",
+     [["Sustancias que dañan la capa de ozono",true],["Exportaciones de vino",false],["Satélites",false],["Velocidad de internet",false]]],
+   ["Energía que no emite CO₂:",
+     [["Solar fotovoltaica",true],["Carbón",false],["Diésel",false],["Gasolina",false]]],
+   ["Sembrar 1 millón de árboles captura…",
+     [["Toneladas de CO₂",true],["Óxidos de nitrógeno",false],["Sodio",false],["Sal común",false]]]
+ ]}
+];
+
+let playerName="", levelIndex=0, questionIndex=0;
+const scene=document.getElementById("scene");
+const overlay=document.createElement("div");overlay.id="overlay";overlay.classList.add("hidden");document.getElementById("game").appendChild(overlay);
+
+const music=document.getElementById("music"), correctSfx=document.getElementById("correct-sfx"), wrongSfx=document.getElementById("wrong-sfx");
+music.volume=0.25; correctSfx.volume=0.8; wrongSfx.volume=0.9;
+
+start();
+
+function start(){music.play().catch(()=>{}); askName();}
+
+function askName(){
+ scene.style.backgroundImage="url("+bgImages[0]+")";
+ scene.innerHTML=`
+  <h2>Bienvenido agente. ¿Cuál es tu nombre?</h2>
+  <input id="nameInput" style="padding:8px;width:60%;max-width:300px;border-radius:6px;border:none;margin:10px 0"/>
+  <button onclick="saveName()">Comenzar Aventura</button>`;
+}
+
+function saveName(){
+ const val=document.getElementById("nameInput").value.trim();
+ if(!val){alert("Por favor ingresa tu nombre");return;}
+ playerName=val;
+ levelIndex=0; initLevel();
+}
+
+function initLevel(){
+ questionIndex=0;
+ scene.style.backgroundImage="url("+bgImages[levelIndex]+")";
+ overlay.classList.remove("hidden");
+ overlay.innerHTML=`<div><h2>${levels[levelIndex].title}</h2><p>${levels[levelIndex].intro(playerName)}</p>
+   <button onclick="nextQuestion()">Iniciar Nivel</button></div>`;
+}
+
+function nextQuestion(){
+ overlay.classList.add("hidden");
+ showQuestion();
+}
+
+function showQuestion(){
+ const level=levels[levelIndex];
+ const [q,optArr]=level.questions[questionIndex];
+ scene.innerHTML=`<h2>${level.title}</h2><p>${q}</p><div id="options"></div>`;
+ const optionsDiv=document.getElementById("options");
+ optArr.forEach(([txt,correct])=>{
+  const btn=document.createElement("button");btn.textContent=txt;
+  btn.onclick=()=>answer(correct);
+  optionsDiv.appendChild(btn);
+ });
+}
+
+function answer(correct){
+ if(!correct){ wrong(); return;}
+ correctSfx.currentTime=0; correctSfx.play();
+ const level=levels[levelIndex];
+ overlay.innerHTML=`<h2>${level.progress[questionIndex]}</h2>`;
+ overlay.classList.remove("hidden");
+ questionIndex++;
+ if(questionIndex>=level.questions.length){
+  // level complete
+  setTimeout(()=>{
+    overlay.innerHTML=`<h2>¡Felicidades ${playerName}! Has desbloqueado el Nivel ${levelIndex+2}</h2><button onclick="levelUp()">Continuar</button>`;
+  },1000);
+ }else{
+  setTimeout(()=>{overlay.classList.add("hidden"); showQuestion();},1500);
+ }
+}
+
+function wrong(){
+ wrongSfx.currentTime=0; wrongSfx.play();
+ overlay.innerHTML=`<h2>Has destruido el mundo.</h2><p>Debes reiniciar el nivel.</p><button onclick="initLevel()">Reintentar</button>`;
+ overlay.classList.remove("hidden");
+}
+
+function levelUp(){
+ overlay.classList.add("hidden");
+ levelIndex++;
+ if(levelIndex>=levels.length){ win(); }
+ else initLevel();
+}
+
+function win(){
+ music.pause();
+ scene.style.backgroundImage="url('https://images.unsplash.com/photo-1496560739320-340e6312b4e6?fit=crop&w=1600&q=60')";
+ scene.innerHTML=`<h2>¡Victoria Final, ${playerName}!</h2><p>Has salvado al planeta. 🌎🌱</p><button onclick="start()">Jugar de nuevo</button>`;
+}
+</script>
+</body>
+</html>
